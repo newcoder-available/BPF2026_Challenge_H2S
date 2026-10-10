@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Ember &amp; Oak — Slow-Roasted Coffee</title>
+<meta name="description" content="Ember & Oak is a neighbourhood coffee bar roasting small batches daily. Warm room, honest prices, very good espresso." />
+<meta name="theme-color" content="#2B1B14" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%98%95%3C/text%3E%3C/svg%3E" />
+<style>
+  /* ---------- tokens ---------- */
+  :root{
+    --cream:#FBF4EC;
+    --cream-2:#F3E7DA;
+    --espresso:#241610;
+    --espresso-soft:#3A2619;
+    --caramel:#C2763A;
+    --caramel-dark:#A65E27;
+    --clay:#8C4A2F;
+    --sage:#6E7F5E;
+    --ink:#2B1B14;
+    --muted:#7A6354;
+    --line:rgba(43,27,20,.14);
+    --radius:20px;
+    --shadow:0 18px 50px -24px rgba(36,22,16,.45);
+    --max:1120px;
+    --ease:cubic-bezier(.22,.8,.3,1);
+  }
+
+  *,*::before,*::after{box-sizing:border-box}
+  html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+  body{
+    margin:0;
+    background:var(--cream);
+    color:var(--ink);
+    font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:clamp(15px,.5vw + 14px,17px);
+    line-height:1.65;
+    overflow-x:hidden;
+  }
+  img{max-width:100%;display:block}
+  a{color:inherit}
+  h1,h2,h3{font-family:"Fraunces","Iowan Old Style",Georgia,serif;font-weight:600;line-height:1.05;margin:0;letter-spacing:-.02em}
+  p{margin:0}
+
+  .wrap{width:min(100% - 2.5rem,var(--max));margin-inline:auto}
+  .eyebrow{
+    font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;
+    font-weight:600;color:var(--caramel-dark);
+  }
+
+  /* ---------- buttons ---------- */
+  .btn{
+    --bg:var(--espresso); --fg:var(--cream);
+    display:inline-flex;align-items:center;gap:.6rem;
+    padding:.95rem 1.6rem;border-radius:999px;border:1px solid transparent;
+    background:var(--bg);color:var(--fg);
+    font-weight:600;font-size:.95rem;text-decoration:none;cursor:pointer;
+    transition:transform .35s var(--ease), box-shadow .35s var(--ease), background .25s;
+    box-shadow:0 10px 24px -14px rgba(36,22,16,.8);
+  }
+  .btn:hover{transform:translateY(-3px);box-shadow:0 20px 34px -18px rgba(36,22,16,.75)}
+  .btn:active{transform:translateY(-1px)}
+  .btn:focus-visible{outline:3px solid var(--caramel);outline-offset:3px}
+  .btn--accent{--bg:var(--caramel);--fg:#fff}
+  .btn--accent:hover{background:var(--caramel-dark)}
+  .btn--ghost{--bg:transparent;--fg:var(--ink);border-color:var(--line)}
+  .btn--ghost:hover{background:rgba(43,27,20,.06)}
+  .btn svg{width:17px;height:17px;transition:transform .35s var(--ease)}
+  .btn:hover svg{transform:translateX(4px)}
+
+  /* ---------- header ---------- */
+  header{
+    position:sticky;top:0;z-index:60;
+    backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    background:rgba(251,244,236,.72);
+    border-bottom:1px solid transparent;
+    transition:background .3s, border-color .3s, box-shadow .3s;
+  }
+  header.is-stuck{background:rgba(251,244,236,.92);border-color:var(--line);box-shadow:0 6px 24px -20px rgba(36,22,16,.8)}
+  .nav{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.9rem 0}
+  .brand{display:flex;align-items:center;gap:.65rem;font-family:"Fraunces",serif;font-weight:700;font-size:1.12rem;text-decoration:none;letter-spacing:-.01em}
+  .brand .mark{
+    width:34px;height:34px;border-radius:11px;flex:none;
+    background:linear-gradient(145deg,var(--caramel),var(--clay));
+    display:grid;place-items:center;color:#fff;font-size:1rem;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.35);
+  }
+  .nav-links{display:flex;align-items:center;gap:.35rem}
+  .nav-links a{
+    text-decoration:none;font-size:.9rem;font-weight:500;color:var(--muted);
+    padding:.5rem .8rem;border-radius:999px;transition:color .2s,background .2s;
+  }
+  .nav-links a:hover{color:var(--ink);background:rgba(43,27,20,.06)}
+  .nav-cta{display:none}
+  @media(min-width:900px){.nav-cta{display:inline-flex}}
+  .menu-toggle{
+    display:grid;place-items:center;width:42px;height:42px;border-radius:12px;
+    border:1px solid var(--line);background:transparent;cursor:pointer;color:var(--ink);
+  }
+  @media(min-width:760px){.menu-toggle{display:none}}
+  @media(max-width:759px){
+    .nav-links{
+      position:absolute;left:1.25rem;right:1.25rem;top:calc(100% + .5rem);
+      flex-direction:column;align-items:stretch;gap:.1rem;
+      background:var(--cream);border:1px solid var(--line);border-radius:var(--radius);
+      padding:.6rem;box-shadow:var(--shadow);
+      opacity:0;visibility:hidden;transform:translateY(-10px);
+      transition:all .3s var(--ease);
+    }
+    .nav-links.open{opacity:1;visibility:visible;transform:none}
+    .nav-links a{padding:.75rem .9rem}
+  }
+
+  /* ---------- hero ---------- */
+  .hero{position:relative;padding:clamp(3rem,7vw,6rem) 0 clamp(3rem,6vw,5rem);overflow:hidden}
+  .hero::before,.hero::after{
+    content:"";position:absolute;border-radius:50%;filter:blur(70px);opacity:.55;pointer-events:none;
+  }
+  .hero::before{width:420px;height:420px;background:#E8C9A6;top:-140px;right:-120px}
+  .hero::after{width:360px;height:360px;background:#D7E0C8;bottom:-180px;left:-140px}
+  .hero-grid{position:relative;display:grid;gap:clamp(2rem,5vw,3.5rem);align-items:center}
+  @media(min-width:940px){.hero-grid{grid-template-columns:1.05fr .95fr}}
+
+  .hero h1{font-size:clamp(2.9rem,8.5vw,5.4rem);margin:.9rem 0 1.1rem}
+  .hero h1 em{font-style:italic;color:var(--caramel-dark);position:relative}
+  .hero h1 em::after{
+    content:"";position:absolute;left:0;right:0;bottom:.08em;height:.1em;border-radius:99px;
+    background:var(--caramel);opacity:.28;
+  }
+  .hero p.lead{color:var(--muted);font-size:clamp(1rem,1.6vw,1.12rem);max-width:46ch}
+  .hero-actions{display:flex;flex-wrap:wrap;gap:.75rem;margin-top:1.9rem}
+  .hero-meta{display:flex;flex-wrap:wrap;gap:1.4rem;margin-top:2.4rem;padding-top:1.6rem;border-top:1px solid var(--line)}
+  .hero-meta div strong{display:block;font-family:"Fraunces",serif;font-size:1.45rem;line-height:1.2}
+  .hero-meta div span{font-size:.8rem;color:var(--muted)}
+
+  /* cup illustration */
+  .cup-card{
+    position:relative;aspect-ratio:4/4.4;border-radius:28px;
+    background:
+      radial-gradient(120% 90% at 20% 0%, #4A3122 0%, transparent 60%),
+      linear-gradient(160deg,#352116,#1C110B);
+    box-shadow:var(--shadow);
+    display:grid;place-items:center;overflow:hidden;
+  }
+  .cup-card::after{
+    content:"";position:absolute;inset:0;
+    background:repeating-linear-gradient(45deg,rgba(255,255,255,.035) 0 2px,transparent 2px 7px);
+  }
+  .cup{position:relative;width:min(64%,250px);z-index:2;filter:drop-shadow(0 22px 30px rgba(0,0,0,.45))}
+  .steam{position:absolute;bottom:62%;left:50%;transform:translateX(-50%);display:flex;gap:16px;z-index:3}
+  .steam span{
+    display:block;width:7px;height:52px;border-radius:99px;
+    background:linear-gradient(to top,rgba(255,255,255,.42),transparent);
+    animation:rise 3.6s ease-in-out infinite;
+  }
+  .steam span:nth-child(2){animation-delay:.7s;height:68px}
+  .steam span:nth-child(3){animation-delay:1.4s}
+  @keyframes rise{
+    0%{opacity:0;transform:translateY(12px) scaleY(.65)}
+    40%{opacity:.85}
+    100%{opacity:0;transform:translateY(-28px) scaleY(1.15)}
+  }
+  .badge{
+    position:absolute;z-index:4;background:var(--cream);color:var(--ink);
+    border-radius:16px;padding:.7rem .95rem;box-shadow:var(--shadow);
+    font-size:.78rem;font-weight:600;line-height:1.3;
+  }
+  .badge small{display:block;font-weight:500;color:var(--muted);font-size:.72rem}
+  .badge--tl{top:7%;left:-14px;animation:float 7s ease-in-out infinite}
+  .badge--br{bottom:8%;right:-10px;animation:float 7s ease-in-out infinite 1.8s}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+
+  /* ---------- marquee ---------- */
+  .marquee{
+    background:var(--espresso);color:var(--cream-2);padding:.85rem 0;overflow:hidden;
+    border-block:1px solid rgba(255,255,255,.08);
+  }
+  .marquee-track{display:flex;gap:2.5rem;width:max-content;animation:slide 26s linear infinite}
+  .marquee span{font-size:.78rem;letter-spacing:.2em;text-transform:uppercase;white-space:nowrap;opacity:.82}
+  .marquee span::after{content:"◆";margin-left:2.5rem;color:var(--caramel);opacity:.9}
+  @keyframes slide{to{transform:translateX(-50%)}}
+
+  /* ---------- sections ---------- */
+  section{scroll-margin-top:86px}
+  .section{padding:clamp(3.5rem,8vw,6.5rem) 0}
+  .section-head{max-width:58ch;margin-bottom:clamp(2rem,4vw,3rem)}
+  .section-head h2{font-size:clamp(2rem,4.6vw,3.1rem);margin:.7rem 0 .9rem}
+  .section-head p{color:var(--muted)}
+
+  /* ---------- menu ---------- */
+  .menu-groups{display:grid;gap:clamp(1.2rem,3vw,1.8rem)}
+  @media(min-width:820px){.menu-groups{grid-template-columns:repeat(3,1fr)}}
+  .card{
+    background:#fff;border:1px solid var(--line);border-radius:var(--radius);
+    padding:clamp(1.3rem,2.6vw,1.8rem);
+    transition:transform .4s var(--ease),box-shadow .4s var(--ease),border-color .3s;
+  }
+  .card:hover{transform:translateY(-6px);box-shadow:var(--shadow);border-color:rgba(194,118,58,.45)}
+  .card h3{font-size:1.25rem;display:flex;align-items:center;gap:.55rem}
+  .card h3 .dot{width:9px;height:9px;border-radius:50%;background:var(--caramel);flex:none}
+  .card .note{font-size:.84rem;color:var(--muted);margin-top:.35rem}
+  .items{list-style:none;margin:1.3rem 0 0;padding:0;display:grid;gap:.95rem}
+  .items li{display:grid;grid-template-columns:1fr auto;align-items:baseline;gap:.5rem}
+  .items .name{font-weight:500}
+  .items .name small{display:block;font-weight:400;font-size:.8rem;color:var(--muted);line-height:1.45}
+  .items .price{
+    font-family:"Fraunces",serif;font-weight:600;font-size:1.02rem;color:var(--clay);
+    font-variant-numeric:tabular-nums;
+  }
+  .tag{
+    display:inline-block;margin-left:.4rem;font-size:.63rem;letter-spacing:.1em;text-transform:uppercase;
+    background:rgba(110,127,94,.16);color:var(--sage);padding:.14rem .45rem;border-radius:6px;font-weight:600;
+    vertical-align:middle;
+  }
+
+  /* ---------- story ---------- */
+  .story{background:var(--cream-2);border-block:1px solid var(--line)}
+  .story-grid{display:grid;gap:clamp(2rem,5vw,3.5rem);align-items:center}
+  @media(min-width:900px){.story-grid{grid-template-columns:.95fr 1.05fr}}
+  .beans{
+    aspect-ratio:1/.82;border-radius:24px;overflow:hidden;position:relative;
+    background:linear-gradient(150deg,#C2763A,#8C4A2F 55%,#3A2619);
+    box-shadow:var(--shadow);
+  }
+  .beans::after{
+    content:"";position:absolute;inset:0;z-index:1;
+    background:radial-gradient(130% 95% at 50% 0%,transparent 35%,rgba(26,15,9,.55) 100%);
+  }
+  .beans svg{position:absolute;inset:0;width:100%;height:100%}
+  .beans span{
+    position:absolute;z-index:2;left:1.4rem;bottom:1.3rem;color:#fff;font-family:"Fraunces",serif;
+    font-size:1.1rem;text-shadow:0 2px 12px rgba(0,0,0,.5);
+  }
+  .facts{display:grid;gap:1rem;margin-top:1.8rem}
+  @media(min-width:520px){.facts{grid-template-columns:repeat(3,1fr)}}
+  .fact{background:#fff;border:1px solid var(--line);border-radius:16px;padding:1rem 1.1rem}
+  .fact strong{display:block;font-family:"Fraunces",serif;font-size:1.6rem;color:var(--clay)}
+  .fact span{font-size:.8rem;color:var(--muted)}
+
+  /* ---------- visit ---------- */
+  .visit-grid{display:grid;gap:1.2rem}
+  @media(min-width:760px){.visit-grid{grid-template-columns:1fr 1fr}}
+  .hours{list-style:none;margin:1.1rem 0 0;padding:0;display:grid;gap:.6rem}
+  .hours li{display:flex;justify-content:space-between;gap:1rem;font-size:.95rem}
+  .hours li span:last-child{color:var(--muted);font-variant-numeric:tabular-nums}
+  .hours li.today{font-weight:600}
+  .hours li.today span:last-child{color:var(--sage)}
+
+  /* ---------- cta ---------- */
+  .cta{
+    background:linear-gradient(150deg,#2E1C13,#171009);color:var(--cream);
+    border-radius:28px;padding:clamp(2.2rem,5vw,3.6rem);text-align:center;
+    position:relative;overflow:hidden;box-shadow:var(--shadow);
+  }
+  .cta::before{
+    content:"";position:absolute;width:380px;height:380px;border-radius:50%;
+    background:var(--caramel);filter:blur(100px);opacity:.33;top:-150px;left:50%;transform:translateX(-50%);
+  }
+  .cta > *{position:relative}
+  .cta h2{font-size:clamp(1.9rem,4.4vw,2.9rem);margin-bottom:.9rem}
+  .cta p{color:rgba(251,244,236,.72);max-width:48ch;margin:0 auto 1.9rem}
+
+  /* ---------- footer ---------- */
+  footer{padding:2.6rem 0 3rem;border-top:1px solid var(--line);margin-top:clamp(3rem,7vw,5rem)}
+  .foot{display:flex;flex-wrap:wrap;gap:1rem;justify-content:space-between;align-items:center;
+    font-size:.85rem;color:var(--muted)}
+  .foot a{text-decoration:none}
+  .foot a:hover{color:var(--ink)}
+  .socials{display:flex;gap:.5rem}
+  .socials a{
+    width:36px;height:36px;border-radius:50%;border:1px solid var(--line);
+    display:grid;place-items:center;transition:background .25s,transform .25s,color .25s;
+  }
+  .socials a:hover{background:var(--espresso);color:var(--cream);transform:translateY(-2px)}
+  .socials svg{width:16px;height:16px}
+
+  /* ---------- toast ---------- */
+  .toast{
+    position:fixed;left:50%;bottom:1.6rem;transform:translate(-50%,160%);
+    background:var(--espresso);color:var(--cream);padding:.85rem 1.3rem;border-radius:999px;
+    font-size:.88rem;font-weight:500;z-index:200;box-shadow:var(--shadow);
+    transition:transform .5s var(--ease);max-width:calc(100% - 2rem);text-align:center;
+  }
+  .toast.show{transform:translate(-50%,0)}
+
+  /* ---------- reveal ---------- */
+  .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s var(--ease),transform .7s var(--ease)}
+  .reveal.in{opacity:1;transform:none}
+
+  @media(prefers-reduced-motion:reduce){
+    *{animation:none !important;transition-duration:.01ms !important;scroll-behavior:auto}
+    .reveal{opacity:1;transform:none}
+  }
+</style>
+</head>
+<body>
+
+<header id="top">
+  <div class="wrap nav">
+    <a class="brand" href="#top">
+      <span class="mark" aria-hidden="true">☕</span>
+      Ember &amp; Oak
+    </a>
+
+    <nav class="nav-links" id="navLinks" aria-label="Primary">
+      <a href="#menu">Menu</a>
+      <a href="#story">Our Roast</a>
+      <a href="#visit">Visit</a>
+      <a href="#order">Order</a>
+    </nav>
+
+    <div style="display:flex;gap:.5rem;align-items:center">
+      <a class="btn btn--accent nav-cta" href="#order">
+        Order ahead
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </a>
+      <button class="menu-toggle" id="menuToggle" aria-expanded="false" aria-controls="navLinks" aria-label="Toggle menu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <p class="eyebrow">Roasted on site · Since 2014</p>
+      <h1>Good mornings start with <em>better coffee</em>.</h1>
+      <p class="lead">A small neighbourhood coffee bar on Oak Street. We roast in tiny batches, pull every shot to order, and keep the sofas warm all day.</p>
+
+      <div class="hero-actions">
+        <a class="btn" href="#menu">
+          See the menu
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+        <a class="btn btn--ghost" href="#visit">Find us</a>
+      </div>
+
+      <div class="hero-meta">
+        <div><strong>4.9★</strong><span>1,280 local reviews</span></div>
+        <div><strong>12 hr</strong><span>Rest before every brew</span></div>
+        <div><strong>100%</strong><span>Direct-trade beans</span></div>
+      </div>
+    </div>
+
+    <div style="position:relative">
+      <div class="cup-card">
+        <div class="steam" aria-hidden="true"><span></span><span></span><span></span></div>
+        <svg class="cup" viewBox="0 0 200 190" role="img" aria-label="A warm cup of coffee">
+          <ellipse cx="100" cy="168" rx="70" ry="12" fill="rgba(0,0,0,.35)"/>
+          <path d="M40 60h110v55a55 55 0 0 1-55 55h0a55 55 0 0 1-55-55z" fill="#FBF4EC"/>
+          <path d="M150 72h12a26 26 0 0 1 0 52h-12" fill="none" stroke="#FBF4EC" stroke-width="12" stroke-linecap="round"/>
+          <ellipse cx="95" cy="60" rx="55" ry="14" fill="#E6D6C5"/>
+          <ellipse cx="95" cy="60" rx="46" ry="10.5" fill="#6B3F22"/>
+          <path d="M72 58c8-5 18-5 24 0s16 5 24 0" fill="none" stroke="#C99A6B" stroke-width="3.2" stroke-linecap="round" opacity=".85"/>
+          <rect x="40" y="128" width="110" height="7" rx="3.5" fill="#C2763A" opacity=".9"/>
+        </svg>
+      </div>
+      <div class="badge badge--tl">Single origin<small>Ethiopia · Guji</small></div>
+      <div class="badge badge--br">Ready in 4 min<small>Order ahead, skip the queue</small></div>
+    </div>
+  </div>
+</section>
+
+<div class="marquee" aria-hidden="true">
+  <div class="marquee-track">
+    <span>Slow roasted</span><span>Oat milk on the house</span><span>Free refills before 9am</span><span>Dog friendly</span><span>Wi-Fi &amp; plugs</span>
+    <span>Slow roasted</span><span>Oat milk on the house</span><span>Free refills before 9am</span><span>Dog friendly</span><span>Wi-Fi &amp; plugs</span>
+  </div>
+</div>
+
+<!-- MENU -->
+<section class="section" id="menu">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <p class="eyebrow">The menu</p>
+      <h2>Short list. Done properly.</h2>
+      <p>Everything is made with our house Ember blend unless you ask otherwise. Swap to any single origin for ₹40.</p>
+    </div>
+
+    <div class="menu-groups">
+      <article class="card reveal">
+        <h3><span class="dot"></span>Espresso Bar</h3>
+        <p class="note">Pulled on a Linea Mini, 18g in / 38g out.</p>
+        <ul class="items">
+          <li><span class="name">Espresso<small>Double shot, thick crema</small></span><span class="price">₹140</span></li>
+          <li><span class="name">Flat White <span class="tag">Best seller</span><small>Silky micro-foam, 6oz</small></span><span class="price">₹210</span></li>
+          <li><span class="name">Cappuccino<small>Classic, dusted with cocoa</small></span><span class="price">₹200</span></li>
+          <li><span class="name">Salted Caramel Latte<small>House caramel, sea salt</small></span><span class="price">₹250</span></li>
+          <li><span class="name">Mocha<small>70% dark chocolate ganache</small></span><span class="price">₹240</span></li>
+        </ul>
+      </article>
+
+      <article class="card reveal">
+        <h3><span class="dot"></span>Slow &amp; Cold</h3>
+        <p class="note">Brewed overnight, poured over clear ice.</p>
+        <ul class="items">
+          <li><span class="name">Cold Brew<small>18-hour steep, no bitterness</small></span><span class="price">₹220</span></li>
+          <li><span class="name">Iced Filter<small>Light, floral, very drinkable</small></span><span class="price">₹190</span></li>
+          <li><span class="name">V60 Pour Over <span class="tag">Rotating</span><small>Ask for today's origin</small></span><span class="price">₹260</span></li>
+          <li><span class="name">Matcha Latte<small>Ceremonial grade, Uji</small></span><span class="price">₹260</span></li>
+          <li><span class="name">Masala Chai<small>Cut with jaggery, slow simmered</small></span><span class="price">₹150</span></li>
+        </ul>
+      </article>
+
+      <article class="card reveal">
+        <h3><span class="dot"></span>From the Kitchen</h3>
+        <p class="note">Baked each morning before we open.</p>
+        <ul class="items">
+          <li><span class="name">Almond Croissant<small>48-hour laminated dough</small></span><span class="price">₹180</span></li>
+          <li><span class="name">Banana Walnut Loaf <span class="tag">Vegan</span><small>Warm, with brown butter spread</small></span><span class="price">₹160</span></li>
+          <li><span class="name">Sourdough &amp; Eggs<small>Soft scramble, chives, chilli oil</small></span><span class="price">₹320</span></li>
+          <li><span class="name">Basil Pesto Toastie<small>Aged cheddar, tomato confit</small></span><span class="price">₹290</span></li>
+          <li><span class="name">Dark Chocolate Cookie<small>Sea salt, still gooey at noon</small></span><span class="price">₹130</span></li>
+        </ul>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- STORY -->
+<section class="section story" id="story">
+  <div class="wrap story-grid">
+    <div class="beans reveal"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs><radialGradient id="bean" cx="35%" cy="28%"><stop offset="0%" stop-color="#6B4327"/><stop offset="100%" stop-color="#36200F"/></radialGradient></defs><g transform="translate(18 22) rotate(-24) scale(1.0)" opacity=".92"><ellipse rx="6.2" ry="4.2" fill="#2A1A10" opacity=".55"/><ellipse rx="6" ry="4" fill="url(#bean)"/><path d="M-5.2 0q2.6 -2.6 5.2 0t5.2 0" fill="none" stroke="#1B0F08" stroke-width=".9" stroke-linecap="round" opacity=".85"/></g><g transform="translate(48 14) rotate(18) scale(0.8)" opacity=".92"><ellipse rx="6.2" ry="4.2" fill="#2A1A10" opacity=".55"/><ellipse rx="6" ry="4" fill="url(#bean)"/><path d="M-5.2 0q2.6 -2.6 5.2 0t5.2 0" fill="none" stroke="#1B0F08" stroke-width=".9" stroke-linecap="round" opacity=".85"/></g><g transform="translate(78 26) rotate(-10) scale(1.15)" opacity=".92"><ellipse rx="6.2" ry="4.2" fill="#2A1A10" opacity=".55"/><ellipse rx="6" ry="4" fill="url(#bean)"/><path d="M-5.2 0q2.6 -2.6 5.2 0t5.2 0" fill="none" stroke="#1B0F08" stroke-width=".9" stroke-linecap="round" opacity=".85"/></g><g transform="translate(30 48) rotate(34) scale(1.25)" opacity=".92"><ellipse rx="6.2" ry="4.2" fill="#2A1A10" opacity=".55"/><ellipse rx="6" ry="4" fill="url(#bean)"/><path d="M-5.2 0q2.6 -2.6 5.2 0t5.2 0" fill="none" stroke="#1B0F08" stroke-width=".9" stroke-linecap="round" opacity=".85"/></g><g transform="translate(63 52) rotate(-28) scale(0.95)" opacity=".92"><ellipse rx="6.2" ry="4.2" fill="#2A1A10" opacity=".55"/><ellipse rx="6" ry="4" fill="url(#bean)"/><path d="M-5.2 0q2.6 -2.6 5.2 0t5.2 0" fill="none" stroke="#1B0F08" stroke-width=".9" stroke-linecap="round" opacity=".85"/></g><g transform="translate(88 58) rotate(12) scale(0.8)" opacity=".92"><ellipse rx="6.2" ry="4.2" fill="#2A1A10" opacity=".55"/><ellipse rx="6" ry="4" fill="url(#bean)"/><path d="M-5.2 0q2.6 -2.6 5.2 0t5.2 0" fill="none" stroke="#1B0F08" stroke-width=".9" stroke-linecap="round" opacity=".85"/></g><g transform="translate(14 70) rotate(-8) scale(0.9)" opacity=".92"><ellipse rx="6.2" ry="4.2" fill="#2A1A10" opacity=".55"/><ellipse rx="6" ry="4" fill="url(#bean)"/><path d="M-5.2 0q2.6 -2.6 5.2 0t5.2 0" fill="none" stroke="#1B0F08" stroke-width=".9" stroke-linecap="round" opacity=".85"/></g><g transform="translate(44 80) rotate(22) scale(1.05)" opacity=".92"><ellipse rx="6.2" ry="4.2" fill="#2A1A10" opacity=".55"/><ellipse rx="6" ry="4" fill="url(#bean)"/><path d="M-5.2 0q2.6 -2.6 5.2 0t5.2 0" fill="none" stroke="#1B0F08" stroke-width=".9" stroke-linecap="round" opacity=".85"/></g><g transform="translate(72 84) rotate(-32) scale(1.15)" opacity=".92"><ellipse rx="6.2" ry="4.2" fill="#2A1A10" opacity=".55"/><ellipse rx="6" ry="4" fill="url(#bean)"/><path d="M-5.2 0q2.6 -2.6 5.2 0t5.2 0" fill="none" stroke="#1B0F08" stroke-width=".9" stroke-linecap="round" opacity=".85"/></g><g transform="translate(92 88) rotate(6) scale(0.7)" opacity=".92"><ellipse rx="6.2" ry="4.2" fill="#2A1A10" opacity=".55"/><ellipse rx="6" ry="4" fill="url(#bean)"/><path d="M-5.2 0q2.6 -2.6 5.2 0t5.2 0" fill="none" stroke="#1B0F08" stroke-width=".9" stroke-linecap="round" opacity=".85"/></g></svg><span>Roastery · Oak St.</span></div>
+    <div class="reveal">
+      <p class="eyebrow">Our roast</p>
+      <h2 style="font-size:clamp(1.9rem,4.4vw,2.9rem);margin:.7rem 0 .9rem">We roast 8 kg at a time, four days a week.</h2>
+      <p style="color:var(--muted)">Small batches mean we can taste every roast before it reaches the bar — and bin the ones that don't earn their place. Beans are bought direct from growers in Chikmagalur, Guji and Huila, and rested a full twelve hours before they ever meet a portafilter.</p>
+      <div class="facts">
+        <div class="fact"><strong>4 days</strong><span>From roast to cup</span></div>
+        <div class="fact"><strong>3</strong><span>Farm partners</span></div>
+        <div class="fact"><strong>0</strong><span>Single-use cups</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- VISIT -->
+<section class="section" id="visit">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <p class="eyebrow">Visit us</p>
+      <h2>Corner of Oak &amp; 5th.</h2>
+      <p>Two minutes from the metro, with a courtyard out back that gets the morning sun.</p>
+    </div>
+
+    <div class="visit-grid">
+      <article class="card reveal">
+        <h3><span class="dot"></span>Opening hours</h3>
+        <ul class="hours" id="hours">
+          <li data-day="1"><span>Monday</span><span>7:00 — 19:00</span></li>
+          <li data-day="2"><span>Tuesday</span><span>7:00 — 19:00</span></li>
+          <li data-day="3"><span>Wednesday</span><span>7:00 — 19:00</span></li>
+          <li data-day="4"><span>Thursday</span><span>7:00 — 19:00</span></li>
+          <li data-day="5"><span>Friday</span><span>7:00 — 22:00</span></li>
+          <li data-day="6"><span>Saturday</span><span>8:00 — 22:00</span></li>
+          <li data-day="0"><span>Sunday</span><span>8:00 — 17:00</span></li>
+        </ul>
+      </article>
+
+      <article class="card reveal">
+        <h3><span class="dot"></span>Find the door</h3>
+        <p class="note">42 Oak Street, Sector 18, Noida 201301</p>
+        <ul class="hours" style="margin-top:1.2rem">
+          <li><span>Phone</span><span><a href="tel:+911234567890" style="text-decoration:none">+91 12345 67890</a></span></li>
+          <li><span>Email</span><span><a href="mailto:hello@emberandoak.coffee" style="text-decoration:none">hello@emberandoak.coffee</a></span></li>
+          <li><span>Parking</span><span>Free after 6pm</span></li>
+          <li><span>Seats</span><span>34 inside · 16 courtyard</span></li>
+        </ul>
+        <a class="btn btn--ghost" style="margin-top:1.4rem" href="https://maps.google.com/?q=Sector+18+Noida" target="_blank" rel="noopener">
+          Open in Maps
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="section" id="order" style="padding-top:0">
+  <div class="wrap">
+    <div class="cta reveal">
+      <p class="eyebrow" style="color:var(--caramel)">Order ahead</p>
+      <h2>Your usual, waiting on the counter.</h2>
+      <p>Tap below, pick your drink, and we'll have it ready in about four minutes. No app, no account, no queue.</p>
+      <button class="btn btn--accent" id="orderBtn">
+        Start my order
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </button>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot">
+    <div>© <span id="year">2026</span> Ember &amp; Oak Coffee Roasters · Made with care in Noida</div>
+    <div class="socials">
+      <a href="#top" aria-label="Instagram"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg></a>
+      <a href="#top" aria-label="Twitter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M22 4.5a8.4 8.4 0 0 1-2.4.7 4.2 4.2 0 0 0 1.8-2.3 8.3 8.3 0 0 1-2.6 1A4.2 4.2 0 0 0 11.5 7a11.8 11.8 0 0 1-8.6-4.3 4.2 4.2 0 0 0 1.3 5.6A4.1 4.1 0 0 1 2.3 7.8a4.2 4.2 0 0 0 3.4 4.1 4.2 4.2 0 0 1-1.9.1 4.2 4.2 0 0 0 3.9 2.9A8.4 8.4 0 0 1 2 16.6a11.8 11.8 0 0 0 6.4 1.9c7.7 0 11.9-6.4 11.9-11.9v-.5A8.5 8.5 0 0 0 22 4.5z"/></svg></a>
+      <a href="#top" aria-label="Back to top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg></a>
+    </div>
+  </div>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  // year
+  document.getElementById('year').textContent = new Date().getFullYear();
+
+  // sticky header state
+  const header = document.querySelector('header');
+  const onScroll = () => header.classList.toggle('is-stuck', window.scrollY > 8);
+  onScroll();
+  window.addEventListener('scroll', onScroll, { passive: true });
+
+  // mobile nav
+  const toggle = document.getElementById('menuToggle');
+  const links = document.getElementById('navLinks');
+  toggle.addEventListener('click', () => {
+    const open = links.classList.toggle('open');
+    toggle.setAttribute('aria-expanded', String(open));
+  });
+  links.addEventListener('click', e => {
+    if (e.target.tagName === 'A') {
+      links.classList.remove('open');
+      toggle.setAttribute('aria-expanded', 'false');
+    }
+  });
+
+  // highlight today's hours
+  const today = new Date().getDay();
+  const row = document.querySelector('#hours li[data-day="' + today + '"]');
+  if (row) {
+    row.classList.add('today');
+    row.firstElementChild.textContent += ' · Today';
+  }
+
+  // toast + order button
+  const toast = document.getElementById('toast');
+  let timer;
+  function say(msg) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(timer);
+    timer = setTimeout(() => toast.classList.remove('show'), 3200);
+  }
+  document.getElementById('orderBtn').addEventListener('click', () => {
+    say('☕ Nice choice — we’ll have it ready at the counter in 4 minutes.');
+  });
+
+  // scroll reveal
+  const items = document.querySelectorAll('.reveal');
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((entry, i) => {
+        if (entry.isIntersecting) {
+          setTimeout(() => entry.target.classList.add('in'), i * 90);
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -60px 0px' });
+    items.forEach(el => io.observe(el));
+  } else {
+    items.forEach(el => el.classList.add('in'));
+  }
+})();
+</script>
+</body>
+</html>
